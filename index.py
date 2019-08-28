@@ -1,7 +1,12 @@
 import csv
 
+start='S3359'
+end='S1828'
+
+
 DataFile=open('.\\Pdata\\out.csv','r',encoding="utf-8")
 Datareader=csv.reader(DataFile)
+Balance=[]
 Lines=[]
 #往返 0
 #环线 1
@@ -13,6 +18,7 @@ Lines=[]
 #需要跳过第一行
 for row in Datareader:
 	try:
+		Balance.append(row[1])
 		if str(row[2][0])=='上':
 			Lines.append(['2',row[2][3:-1],'3',row[4][3:-1]])
 		elif str(row[2][0])=='环':
@@ -108,6 +114,7 @@ def convertNode(Line):
 
 # 寻找线路上的站点 看是否有相同站点 即为换乘站点
 def serachEqualNode(startLine,endLine):
+	resList=[]
 	for i in range(len(startLine)):
 		startLineNode=convertNode(Lines[startLine[i]-1])
 		for j in range(len(endLine)):
@@ -117,6 +124,8 @@ def serachEqualNode(startLine,endLine):
 				print('L0'+str(startLine[i]),'L0'+str(endLine[j]))
 				resnode=EqualNode(startLineNode,endLineNode)
 				print(list(set(resnode)))
+				resList.append([startLine[i],endLine[j],list(set(resnode))])
+	return resList
 
 # 通过寻找线路上的站点 看是否有相同站点 即为换乘站点
 def EqualNode(startLineNode,endLineNode):
@@ -183,6 +192,87 @@ def EqualNode(startLineNode,endLineNode):
 		return resnode
 		return True
 
+# 计算需换乘时间 并返回各个方案的时间集
+def calTransformTime(resList,transferTime):
+	print('---------计算时间-----------\n')
+	result={'info':'相关信息','node':0,'sumcount':0,'sumtime':0,'sumbalance':0}
+	selectLine=[]
+	for i in resList:
+		selectLine.append(i)
+		# 判断行驶种类
+		if str(Lines[i[0]-1][0]) == '2':
+			Line1up=''.join(Lines[i[0]-1][1]).split('-')
+			Line1down=''.join(Lines[i[0]-1][3]).split('-')
+			Line2up=''.join(Lines[i[1]-1][1]).split('-')
+			Line2down=''.join(Lines[i[1]-1][3]).split('-')
+			for j in i[2]:
+				selectLine.append(j)
+				if j in Line1up:
+					if Line1up.index(start)<Line1up.index(j):
+						if j  in Line2up:
+							if Line2up.index(j)<Line2up.index(end):
+								L1count=Line1up.index(j)-Line1up.index(start)
+								L2count=Line2up.index(end)-Line2up.index(j)
+								sumcount=Line1up.index(j)-Line1up.index(start)+Line2up.index(end)-Line2up.index(j)
+								sumtime=sumcount*3+transferTime*5
+								sumbalance=calBalance(i[0],L1count)+calBalance(i[1],L2count)
+								selectLine.append(sumcount)
+								selectLine.append(sumtime)
+								selectLine.append(sumbalance)
+						if j in Line2down:
+							if Line2down.index(j)<Line2down.index(end):
+								L1count=Line1up.index(j)-Line1up.index(start)
+								L2count=Line2down.index(end)-Line2down.index(j)
+								sumcount=Line1up.index(j)-Line1up.index(start)+Line2down.index(end)-Line2down.index(j)
+								sumtime=sumcount*3+transferTime*5
+								sumbalance=calBalance(i[0],L1count)+calBalance(i[1],L2count)
+								selectLine.append(sumcount)
+								selectLine.append(sumtime)
+								selectLine.append(sumbalance)
+				if j in Line1down:
+					if Line1down.index(start)<Line1down.index(j):
+						if j in Line2up:
+							if Line2up.index(j)<Line2up.index(end):
+								L1count=Line1down.index(j)-Line1down.index(start)
+								L2count=Line2up.index(end)-Line2up.index(j)
+								sumcount=Line1down.index(j)-Line1down.index(start)+Line2up.index(end)-Line2up.index(j)
+								sumtime=sumcount*3+transferTime*5
+								sumbalance=calBalance(i[0],L1count)+calBalance(i[1],L2count)
+								selectLine.append(sumcount)
+								selectLine.append(sumtime)
+								selectLine.append(sumbalance)
+						if j in Line2down:
+							if Line2down.index(j)<Line2down.index(end):
+								L1count=Line1down.index(j)-Line1down.index(start)
+								L2count=Line2down.index(end)-Line2down.index(j)
+								sumcount=Line1down.index(j)-Line1down.index(start)+Line2down.index(end)-Line2down.index(j)
+								sumtime=sumcount*3+transferTime*5
+								sumbalance=calBalance(i[0],L1count)+calBalance(i[1],L2count)
+								selectLine.append(sumcount)
+								selectLine.append(sumtime)
+								selectLine.append(sumbalance)
+		if str(Lines[i[0]-1][0]) == '1':
+			print('环线')
+
+		if str(Lines[i[0]-1][0]) == '0':
+			print('往返')
+
+	return selectLine
+#根据路线查询计价规则
+def calBalance(line,lcount):
+	if len(Balance[line-1])==6:
+		if lcount<=20:
+			return 1
+		if lcount>20&lcount<=40:
+			return 3
+		else:
+			return 6
+	else:
+		return 1
+
+
+def mintime(selectLines):
+	print(selectLines)
 
 # main function
 resline=searchLine(3359,1828,Lines)
@@ -193,4 +283,7 @@ if serachFromTwoLines(resline[0],resline[1]):
 	print('找到直达路径')
 else:
 	print('未找到直达路径')
-	serachEqualNode(resline[0],resline[1])
+	resList=serachEqualNode(resline[0],resline[1])
+	selectLine=calTransformTime(resList,1)
+	mintime(selectLine)
+
