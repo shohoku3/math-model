@@ -1,9 +1,8 @@
 import csv
 import re
 f=open('.\\Bdata\\1.1.txt','r')
-outputfile=open('.\\Pdata\\公共汽车线路统计.csv','w',newline='',encoding="utf-8")
+outputfile=open('.\\Pdata\\out.csv','w',newline='',encoding="utf-8")
 outputWrite=csv.writer(outputfile)
-outputWrite.writerow(['Line','计价规则','环线路','上行路线','下行路线','节点统计'])
 count=0
 Line=[]
 stopReg=re.compile(r'[S0-9]{5}')
