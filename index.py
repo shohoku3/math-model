@@ -253,10 +253,10 @@ def calTransformTime(resList,transferTime):
 								selectLine.append(sumbalance)
 		if str(Lines[i[0]-1][0]) == '1':
 			print('环线')
-
+			
 		if str(Lines[i[0]-1][0]) == '0':
 			print('往返')
-
+			
 	return selectLine
 #根据路线查询计价规则
 def calBalance(line,lcount):
